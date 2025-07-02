@@ -1,0 +1,27 @@
+{
+    "name": "money-expend-analyser",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "dev": "ts-node-dev --respawn src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "dotenv": "^16.5.0",
+        "express": "^5.1.0",
+        "pdf-lib": "^1.17.1",
+        "pdf-parse": "^1.1.1",
+        "pdfjs-dist": "^5.3.31"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.3",
+        "@types/pdf-parse": "^1.1.5",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.8.3"
+    }
+}
