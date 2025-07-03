@@ -1,6 +1,6 @@
 import pdfDist from "pdfjs-dist/legacy/build/pdf.mjs";
 import { readFileSync } from "fs";
-import { Transaction } from "./types/pdf-analyser.types";
+import { ExpenditureSummary, Transaction } from "./types/pdf-analyser.types";
 
 export class PDFAnalyser {
     constructor(public filePath: string) {}
@@ -80,7 +80,7 @@ export class PDFAnalyser {
         const pdfDocument = await loadingTask.promise;
 
         const numPages = pdfDocument.numPages;
-        const allTransactions = [];
+        const allTransactions: Transaction[] = [];
 
         for (let i = 1; i <= numPages; i++) {
             const page = await pdfDocument.getPage(i);
@@ -117,6 +117,67 @@ export class PDFAnalyser {
             }
         }
 
-        return allTransactions;
+        return this.summarizeExpenditure(allTransactions);
+    }
+
+    async summarizeExpenditure(transactions: Transaction[]) {
+        let expenditureSummary: ExpenditureSummary = {
+            totalDebitAmount: 0,
+            totalCreditAmount: 0,
+            startDate: new Date(),
+            endDate: new Date(),
+            totalMoneyExpended: 0,
+            totalMoneyIncreased: 0,
+        };
+
+        const dateWiseGroupedTransactions: {
+            [date: string]: Omit<Transaction, "date">[];
+        } = {};
+        const uniqueDates = new Set<string>();
+
+        for (let index = 0; index < transactions.length; index++) {
+            const { debit, credit, date, balance, details } =
+                transactions[index];
+            expenditureSummary.totalDebitAmount += debit;
+            expenditureSummary.totalCreditAmount += credit;
+            const dateKey = new Date(date).toISOString().split("T")[0];
+
+            if (!dateWiseGroupedTransactions[dateKey]) {
+                dateWiseGroupedTransactions[dateKey] = [];
+            }
+
+            dateWiseGroupedTransactions[dateKey].push({
+                debit,
+                credit,
+                balance,
+                details,
+            });
+
+            uniqueDates.add(dateKey);
+        }
+
+        const startDate = Array.from(uniqueDates).sort()[0];
+        const endDate = Array.from(uniqueDates).sort().reverse()[0];
+
+        const {
+            debit: startingDebit,
+            credit: startingCredit,
+            balance: startingBalance,
+        } = dateWiseGroupedTransactions[startDate][
+            dateWiseGroupedTransactions[startDate].length - 1
+        ];
+
+        const startingAmount = startingDebit
+            ? startingBalance + startingDebit
+            : startingBalance - startingCredit;
+
+        const endingAmount = dateWiseGroupedTransactions[endDate][0].balance;
+
+        expenditureSummary.totalMoneyExpended = startingAmount - endingAmount;
+        expenditureSummary.totalMoneyIncreased = endingAmount - startingAmount;
+        expenditureSummary.startDate = new Date(startDate);
+        expenditureSummary.endDate = new Date(endDate);
+
+        return expenditureSummary;
     }
 }
