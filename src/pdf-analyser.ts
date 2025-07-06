@@ -213,9 +213,11 @@ export class PDFAnalyser {
             {};
 
         transactions.forEach((transaction) => {
-            const yearMonth = new Date(transaction.date)
-                .toISOString()
-                .split("T")[0];
+            const yearMonth =
+                new Date(transaction.date).getMonth() +
+                1 +
+                "-" +
+                new Date(transaction.date).getFullYear();
             if (!monthWiseTransactions[yearMonth]) {
                 monthWiseTransactions[yearMonth] = [];
             }
