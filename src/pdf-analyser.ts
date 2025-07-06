@@ -120,7 +120,7 @@ export class PDFAnalyser {
         return this.summarizeExpenditure(allTransactions);
     }
 
-    async summarizeExpenditure(transactions: Transaction[]) {
+    private summarizeExpenditure(transactions: Transaction[]) {
         let expenditureSummary: ExpenditureSummary = {
             totalDebitAmount: 0,
             totalCreditAmount: 0,
@@ -179,5 +179,59 @@ export class PDFAnalyser {
         expenditureSummary.endDate = new Date(endDate);
 
         return expenditureSummary;
+    }
+
+    private yearWiseExpenditure(transactions: Transaction[]): {
+        [year: string]: ExpenditureSummary;
+    } {
+        const yearWiseTrasactions: { [year: number]: Transaction[] } = {};
+
+        transactions.forEach((transaction) => {
+            const year = new Date(transaction.date).getFullYear();
+            if (!yearWiseTrasactions[year]) {
+                yearWiseTrasactions[year] = [];
+            }
+
+            yearWiseTrasactions[year].push(transaction);
+        });
+
+        const yearWiseSummary: { [year: string]: ExpenditureSummary } = {};
+
+        for (const year in yearWiseTrasactions) {
+            yearWiseSummary[year] = this.summarizeExpenditure(
+                yearWiseTrasactions[year]
+            );
+        }
+
+        return yearWiseSummary;
+    }
+
+    private monthWiseExpenditure(transactions: Transaction[]): {
+        [yearMonth: string]: ExpenditureSummary;
+    } {
+        const monthWiseTransactions: { [yearMonth: string]: Transaction[] } =
+            {};
+
+        transactions.forEach((transaction) => {
+            const yearMonth = new Date(transaction.date)
+                .toISOString()
+                .split("T")[0];
+            if (!monthWiseTransactions[yearMonth]) {
+                monthWiseTransactions[yearMonth] = [];
+            }
+
+            monthWiseTransactions[yearMonth].push(transaction);
+        });
+
+        const monthWiseSummary: { [yearMonth: string]: ExpenditureSummary } =
+            {};
+
+        for (const yearMonth in monthWiseTransactions) {
+            monthWiseSummary[yearMonth] = this.summarizeExpenditure(
+                monthWiseTransactions[yearMonth]
+            );
+        }
+
+        return monthWiseSummary;
     }
 }
